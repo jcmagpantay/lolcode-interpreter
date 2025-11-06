@@ -158,20 +158,32 @@ def lexify(line):
             matches = re.finditer(regex, line)
             # ignore the line if it match to the comment
             for match in matches:
-                matches_tuple.append((match.start(), match.group(), pattern))
-
-            # Remove the specific pattern from line to avoid double-matching
-            line = re.sub(regex, '', line)
+                matches_tuple.append((match.start(), match.end(), match.group(), pattern))
 
     matches_tuple.sort(key=lambda m: m[0])
 
     seen_tokens = set()
-    for pos, word, pattern in matches_tuple:
-        if pos not in seen_tokens:
+    for start, end, word, pattern in matches_tuple:
+        overlapping = False
+        new_tok = (start, end)
+
+        if not seen_tokens:
             lexemes.append((word, pattern))
-            seen_tokens.add(pos)
+            seen_tokens.add((start, end))
+
+        for seen in seen_tokens:
+            if overlaps(new_tok, seen):
+                overlapping = True
+
+        if not overlapping:
+            seen_tokens.add((start, end))
+            lexemes.append((word, pattern))
 
     return lexemes
+
+def overlaps(x, y):
+    """Return True if intervals x and y overlap."""
+    return not (x[1] <= y[0] or y[1] <= x[0])
 
 def display_table(table):
     
