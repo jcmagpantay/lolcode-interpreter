@@ -91,6 +91,21 @@ def lexify(line):
 
     return lexemes
 
+def display_table(table):
+    
+    # Formatting variables
+    token_width = 16
+    pattern_width = 24
+
+    print(f"{'Token':>{token_width}}  {'Pattern':>{pattern_width}}")
+    print("-" * (token_width + pattern_width + 2))
+
+    for (token, pattern) in table:
+        if pattern == "IGNORE_S_T":
+            continue
+
+        print(f"{token:>{token_width}}  ", end = "")
+        print(f"{pattern:>{pattern_width}}")
 
 def clean(token):
     """
@@ -107,7 +122,8 @@ def clean(token):
 
 def main():
     lexeme_table = lex("test/simple_test.lol")
-
+    
+    display_table(lexeme_table)
 
 if __name__ == "__main__":
     main()
