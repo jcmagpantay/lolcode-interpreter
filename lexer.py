@@ -162,6 +162,7 @@ def lexify(line):
 
     matches_tuple.sort(key=lambda m: m[0])
 
+    # Filters duplicate tokens and intersecting tokens
     seen_tokens = set()
     for start, end, word, pattern in matches_tuple:
         overlapping = False
