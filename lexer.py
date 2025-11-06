@@ -40,8 +40,11 @@ def lex(directory):
     lexeme_table = []
 
     lines = read_file(directory)
-
+    skip_line = False #flag sana to ignore lines pero di ko pa napagana
     for line in lines:
+        # Ignore everything after
+        if "BTW" in line:
+            line = line.split("BTW")[0]  # keep only before BTW
         lexeme_line = lexify(line)
         lexeme_table.extend(lexeme_line)
 
@@ -65,11 +68,32 @@ def lexify(line):
     # List of RegEx patterns to be matched against.
     # NOTE: Order is important. Place the patterns carefully in prioritization.
     regex_library = {
-        "CODE DELIMITER": [r"\bHAI\b"],
-        "ARITHMETIC OPERATOR": [r"\bSUM OF\b", r"\DIFF OF\b", r"\bPRODUKT OF\b", r"\bQUOSHUNT OF\b" ],
+        "CODE DELIMITER": [r"\bHAI\b",r"\bKTHXBYE\b"],
+        "ARITHMETIC OPERATOR": [r"\bSUM OF\b", r"\DIFF OF\b", r"\bPRODUKT OF\b", r"\bQUOSHUNT OF\b", r"\bMOD OF\b", r"\bBIGGR OF\b", r"\bSMALLR OF\b"],
         "VARIABLE LIST DELIMITER" :[r"\bWAZZUP\b", r"\bBUHBYE\b"],
+        "ASSIGNMENT R":[r"\ R\ "],
+        "BOOLEAN OPERATOR": [r"\bBOTH OF\b", r"\bEITHER OF\b", r"\bWON OF\b", r"\bNOT\b", r"\bALL OF\b", r"\bANY OF\b"],
+        "COMPARISON OPERATOR": [r"\bBOTH SAEM\b", r"\bDIFFRINT\b"],
+        "FLOW CONTROL DELIMITER": [r"\bO RLY\?\b",r"\bWTF\?\b", r"\bOIC\b"],
+        "IF OPERATOR": [r"\bYA RLY\b"],
+        "ELSE OPERATOR":[r"\bNO WAI\b"],
+        "CASE OPERATOR":[r"\bOMG\b",r"\bOMGWTF\b"],
+        "LOOP DELIMITER": [r"\bIM IN\b", r"\bIM OUTTA\b", r"\bTIL\b", r"\bWILE\b"],
+        "LOOP NEST":[r"\bMEBBE\b"],
+        "NUM CAST OPERATOR":[r"\bUPPIN\b",r"\bNERFIN\b"],
+        "PARAMETER": [r"\bYR\b"],
+        "FUNCTION DELIMITER":[r"\bHOW IZ I\b", r"\bIF U SAY SO\b"],
+        "FUNCTION CALL DELIMITER":[r"\bI IZ\b", r"\bMKAY\b"],
+        "CONCAT OPERATOR" :[r"\bSMOOSH\b"],
+        "TYPECAST OPERATOR": [r"\bMAEK\b"],
+        "RECAST OPERATOR": [r"\b IS NOW A\b"],
+        "RETURN KEYWORD": [r"\bFOUND\b",r"\bGTFO\b"],
+        "OUTPUT KEYWORD": [r"\bVISIBLE\b"],
+        "INPUT KEYWORD": [r"\bGIMMEH\b"],
+        "PARAMETER SEPARATOR": [r"\bAN\b"],
         "VARIABLE DECLARATION": [r"\bI HAS A\b"],
         "VARIABLE ASSIGNMENT (following I HAS A)": [r"\bITZ\b"],
+        "TYPECAST A": [r"\ A\ "],
         "VAR_IDENTIFIER": [r"[a-zA-Z][a-zA-Z0-9_]*"],
         "STRING DELIMITER":[r"\""],
         "NUMBAR_LITERAL": [r"-?[0-9]+\.[0-9]+"],
@@ -87,10 +111,8 @@ def lexify(line):
             # Find all matches of specific pattern
             matches = re.findall(regex, line)
             # ignore the line if it match to the comment
-            if matches and matches[0] != "BTW":
-                # Then append it to the variable to be returned
-                for match in matches:
-                    lexemes.append((match, pattern))
+            for match in matches:
+                lexemes.append((match, pattern))
 
             # Remove the specific pattern from line to avoid double-matching
             line = re.sub(regex, '', line)
