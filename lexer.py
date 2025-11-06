@@ -65,29 +65,35 @@ def lexify(line):
     # List of RegEx patterns to be matched against.
     # NOTE: Order is important. Place the patterns carefully in prioritization.
     regex_library = {
-        "KEYWORD": r"\bHAI\b",
-        "VAR_IDENTIFIER": r"[a-zA-Z][a-zA-Z0-9_]*",
-        "NUMBAR_LITERAL": r"-?[0-9]+\.[0-9]+",
-        "NUMBR_LITERAL": r"-?[0-9]+",
-        "YARN_LITERAL": "\".*\"",
-        "TROOF_LITERAL": r"WIN|FAIL",
-        "TYPE_LITERAL": r"NUMBR|NUMBAR|YARN|TROOF",
-        "IGNORE_S_T": r"[ \t\n]",
-        "NO_MATCH": r".+"
+        "CODE DELIMITER": [r"\bHAI\b"],
+        "ARITHMETIC OPERATOR": [r"\bSUM OF\b", r"\DIFF OF\b", r"\bPRODUKT OF\b", r"\bQUOSHUNT OF\b" ],
+        "VARIABLE LIST DELIMITER" :[r"\bWAZZUP\b", r"\bBUHBYE\b"],
+        "VARIABLE DECLARATION": [r"\bI HAS A\b"],
+        "VARIABLE ASSIGNMENT (following I HAS A)": [r"\bITZ\b"],
+        "VAR_IDENTIFIER": [r"[a-zA-Z][a-zA-Z0-9_]*"],
+        "STRING DELIMITER":[r"\""],
+        "NUMBAR_LITERAL": [r"-?[0-9]+\.[0-9]+"],
+        "NUMBR_LITERAL": [r"-?[0-9]+"],
+        "YARN_LITERAL": ["\".*\""],
+        "TROOF_LITERAL": [r"WIN|FAIL"],
+        "TYPE_LITERAL": [r"NUMBR|NUMBAR|YARN|TROOF"],
+        "IGNORE_S_T": [r"[ \t\n]"],
+        "NO_MATCH": [r".+"]
     }
 
     # Exhausts all patterns in library
     for pattern in regex_library:
+        for regex in regex_library[pattern]:
+            # Find all matches of specific pattern
+            matches = re.findall(regex, line)
+            # ignore the line if it match to the comment
+            if matches and matches[0] != "BTW":
+                # Then append it to the variable to be returned
+                for match in matches:
+                    lexemes.append((match, pattern))
 
-        # Find all matches of specific pattern
-        matches = re.findall(regex_library[pattern], line)
-
-        # Then append it to the variable to be returned
-        for match in matches:
-            lexemes.append((match, pattern))
-
-        # Remove the specific pattern from line to avoid double-matching
-        line = re.sub(regex_library[pattern], '', line)
+            # Remove the specific pattern from line to avoid double-matching
+            line = re.sub(regex, '', line)
 
     return lexemes
 
