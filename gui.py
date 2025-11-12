@@ -3,7 +3,8 @@ from tkinter import ttk
 from tkinter import filedialog
 from tkinter.scrolledtext import ScrolledText
 import os
-
+# import the lex in lexer.py
+from lexer import lex
 # root app initialization
 class LOLCodeInterpreterGUI:
     def __init__(self, master):
@@ -17,20 +18,20 @@ class LOLCodeInterpreterGUI:
         master.grid_columnconfigure(0, weight=1)
         master.grid_columnconfigure(1, weight=1)
         
-        # --- 1. File Explorer / Menu Bar ---
-        self.menu_bar()
+        # File Explorer 
+        self.file_explorer()
 
-        # --- 2. Text Editor & Tables Frame (Row 0) ---
+        # Text Editor, Lexemes Table, Symbol Table
         self.edit_lex_sym_container()
 
-        # --- 5. Execute Button Frame (Row 1) ---
+        # Execute Button Frame
         self.execute_button()
 
-        # --- 6. Console Frame (Row 2) ---
+        # Console Frame
         self.create_console()
 
-    def menu_bar(self):
-        # for menu bars
+    def file_explorer(self):
+        # for menu bar (file explorer)
         menu_bar = tk.Menu(self.master)
         self.master.config(menu=menu_bar)
 
@@ -44,11 +45,25 @@ class LOLCodeInterpreterGUI:
         # Left side: Text Editor
         left_frame = tk.Frame(self.master, bd=2, relief=tk.SUNKEN)
         left_frame.grid(row=0, column=0, sticky="nsew", padx=5, pady=5)
-        
-        tk.Label(left_frame, text="Text Editor", font=('Arial', 10, 'bold')).pack(pady=2)
+        left_frame.grid_rowconfigure(0, weight=0)
+        left_frame.grid_rowconfigure(1, weight=0)
+        left_frame.grid_rowconfigure(2, weight=1) 
+        left_frame.grid_columnconfigure(0, weight=1)
+        # label 
+        tk.Label(left_frame, text="Text Editor", font=('Arial', 10, 'bold')).grid(row=0, column=0, pady=2, sticky="ew")
+        # filename
+        self.file_name_label = tk.Label(
+            left_frame,                              
+            text="No file loaded", 
+            font=('Arial', 9, 'italic'),             
+            bg="#f2f1f1",                           
+            anchor="w" 
+        )
+        # Place the label in Row 1, Column 0, spanning the full width
+        self.file_name_label.grid(row=1, column=0, sticky="ew", padx=2, ipady=1)
         # text editor frame
         self.text_editor = ScrolledText(left_frame, wrap=tk.WORD, undo=True, height=20)
-        self.text_editor.pack(fill="both", expand=True)
+        self.text_editor.grid(row=2, column=0, sticky="nsew", padx=5, pady=5)
         
         # Right Side: Lexemes & Symbol Table 
         right_frame = tk.Frame(self.master)
@@ -116,6 +131,7 @@ class LOLCodeInterpreterGUI:
             self.text_editor.delete('1.0', tk.END)
             self.text_editor.insert('1.0', code)
             self.log_to_console(f"File loaded: {os.path.basename(file_path)}")
+            self.file_name_label.config(text=f"{os.path.basename(file_path)}")
 
     # function for executing the lol code when the button is clicked
     # output is displayed in the console
@@ -128,8 +144,10 @@ class LOLCodeInterpreterGUI:
             self.log_to_console("Error: Text editor is empty.")
             return
 
+        # call the lex function from lexer.py
+        lexeme_table = lex(code)
         # 1. Lexical Analysis 
-        self.update_tokens(code)
+        self.update_lexeme_frame(lexeme_table)
         
         # 2. Variable/Symbol Tracking (Update Symbol Table)
         self.update_symbol_table(code) 
@@ -146,32 +164,20 @@ class LOLCodeInterpreterGUI:
         # disable again so the user cannot edit the console
         self.console.config(state=tk.DISABLED)
 
-    def update_tokens(self, code):
-        """Simulates updating the List of Tokens (3)."""
+    # function for updating the lexeme table in the screen
+    def update_lexeme_frame(self, lexemes):
         # Clear existing data
         for item in self.token_tree.get_children():
             self.token_tree.delete(item)
-            
-        # Add simulated data based on the image's example
-        tokens = [
-            ("HAI", "Code Delimiter"),
-            ("I", "Identifier"),
-            ("HAS", "Variable Declaration"),
-            ("A", "Variable Identifier"),
-            ("var", "Variable Identifier"),
-            ("ITZ", "Variable Assignment"),
-            ("12", "Literal"),
-            ("VISIBLE", "Output Keyword"),
-            ("\"", "String Delimiter"),
-            ("noot noot", "String Delimiter"),
-            ("\"", "String Delimiter"),
-            ("var", "Variable Identifier"),
-            ("KTHXBYE", "Code Delimiter"),
-        ]
         
-        for lexeme, classification in tokens:
+        # Fill the tree(table) with the values from the list returned from lex
+        for lexeme, classification in lexemes:
+            # ignore the IGNORE patterns
+            if classification == "IGNORE_S_T":
+                continue
             self.token_tree.insert('', tk.END, values=(lexeme, classification))
-            
+
+    # function for updating the symbol table in the screen   
     def update_symbol_table(self, code):
         # Clear existing data
         for item in self.symbol_tree.get_children():
