@@ -73,11 +73,11 @@ class LOLCodeInterpreterGUI:
         right_frame.grid_columnconfigure(1, weight=1)
         
         # Lexemes
-        token_frame = tk.Frame(right_frame, bd=2, relief=tk.SUNKEN)
-        token_frame.grid(row=0, column=0, sticky="nsew", padx=2)
-        tk.Label(token_frame, text="Lexemes", font=('Arial', 10, 'bold')).pack(pady=2)
-        self.token_tree = self.create_table(token_frame, ('Lexeme', 'Classification'))
-        self.token_tree.pack(fill="both", expand=True, padx=5, pady=5)
+        lexeme_frame = tk.Frame(right_frame, bd=2, relief=tk.SUNKEN)
+        lexeme_frame.grid(row=0, column=0, sticky="nsew", padx=2)
+        tk.Label(lexeme_frame, text="Lexemes", font=('Arial', 10, 'bold')).pack(pady=2)
+        self.lexeme_tree = self.create_table(lexeme_frame, ('Lexeme', 'Classification'))
+        self.lexeme_tree.pack(fill="both", expand=True, padx=5, pady=5)
 
         #Symbol Table
         symbol_frame = tk.Frame(right_frame, bd=2, relief=tk.SUNKEN)
@@ -167,15 +167,15 @@ class LOLCodeInterpreterGUI:
     # function for updating the lexeme table in the screen
     def update_lexeme_frame(self, lexemes):
         # Clear existing data
-        for item in self.token_tree.get_children():
-            self.token_tree.delete(item)
+        for item in self.lexeme_tree.get_children():
+            self.lexeme_tree.delete(item)
         
         # Fill the tree(table) with the values from the list returned from lex
         for lexeme, classification in lexemes:
             # ignore the IGNORE patterns
             if classification == "IGNORE_S_T":
                 continue
-            self.token_tree.insert('', tk.END, values=(lexeme, classification))
+            self.lexeme_tree.insert('', tk.END, values=(lexeme, classification))
 
     # function for updating the symbol table in the screen   
     def update_symbol_table(self, code):
