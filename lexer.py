@@ -41,12 +41,56 @@ def lex(directory):
 
     lines = read_file(directory)
 
+    skip_line = False #flag sana to ignore lines pero di ko pa napagana
+
+
     for line in lines:
+
+        #if nasa loob ng  block comment, look for TLDR
+        if skip_line:
+            if "TLDR" in line:
+
+                # resume AFTER TLDR on the same line
+                line = line.split("TLDR", 1)[1]
+                skip_line = False
+
+            else:
+                # still inside block, skip line
+                continue
+
+        #outside of a block: remove any OBTW, TLDR that might be on this same line
+        #sensing the case of having multiple OBTW/TLDR pairs in one line; handle them iteratively.
+        while True:
+
+            start = line.find("OBTW")
+
+            if start == -1:
+                break
+
+            end = line.find("TLDR", start + 4)
+
+            if end == -1:
+                #start block comment and keep only the part BEFORE OBTW
+                line = line[:start]
+                skip_line = True
+                break
+
+            else:
+                #remove the OBTW...TLDR segment and keep both sides
+                line = line[:start] + line[end + 4:]
+
+        if skip_line:
+            #when entered a block comment and no TLDR yet; skip the rest of this line
+            continue
+
+        # Ignore everything after
+        if "BTW" in line:
+            line = line.split("BTW")[0]  # keep only before BTW
         lexeme_line = lexify(line)
         lexeme_table.extend(lexeme_line)
 
-    return lexeme_table
-        
+
+    return lexeme_table       
 
 def lexify(line):
     """
@@ -65,37 +109,88 @@ def lexify(line):
     # List of RegEx patterns to be matched against.
     # NOTE: Order is important. Place the patterns carefully in prioritization.
     regex_library = {
-        "KEYWORD": r"\bHAI\b",
-        "VAR_IDENTIFIER": r"[a-zA-Z][a-zA-Z0-9_]*",
-        "NUMBAR_LITERAL": r"-?[0-9]+\.[0-9]+",
-        "NUMBR_LITERAL": r"-?[0-9]+",
-        "YARN_LITERAL": "\".*\"",
-        "TROOF_LITERAL": r"WIN|FAIL",
-        "TYPE_LITERAL": r"NUMBR|NUMBAR|YARN|TROOF",
-        "IGNORE_S_T": r"[ \t\n]",
-        "NO_MATCH": r".+"
+        "CODE DELIMITER": [r"\bHAI\b",r"\bKTHXBYE\b"],
+        "ARITHMETIC OPERATOR": [r"\bSUM OF\b", r"\DIFF OF\b", r"\bPRODUKT OF\b", r"\bQUOSHUNT OF\b", r"\bMOD OF\b", r"\bBIGGR OF\b", r"\bSMALLR OF\b"],
+        "VARIABLE LIST DELIMITER" :[r"\bWAZZUP\b", r"\bBUHBYE\b"],
+        "ASSIGNMENT R":[r"\ R\ "],
+        "BOOLEAN OPERATOR": [r"\bBOTH OF\b", r"\bEITHER OF\b", r"\bWON OF\b", r"\bNOT\b", r"\bALL OF\b", r"\bANY OF\b"],
+        "COMPARISON OPERATOR": [r"\bBOTH SAEM\b", r"\bDIFFRINT\b"],
+        "FLOW CONTROL DELIMITER": [r"\bO RLY\?\b",r"\bWTF\?\b", r"\bOIC\b"],
+        "IF OPERATOR": [r"\bYA RLY\b"],
+        "ELSE OPERATOR":[r"\bNO WAI\b"],
+        "CASE OPERATOR":[r"\bOMG\b",r"\bOMGWTF\b"],
+        "LOOP DELIMITER": [r"\bIM IN\b", r"\bIM OUTTA\b", r"\bTIL\b", r"\bWILE\b"],
+        "LOOP NEST":[r"\bMEBBE\b"],
+        "NUM CAST OPERATOR":[r"\bUPPIN\b",r"\bNERFIN\b"],
+        "PARAMETER": [r"\bYR\b"],
+        "FUNCTION DELIMITER":[r"\bHOW IZ I\b", r"\bIF U SAY SO\b"],
+        "FUNCTION CALL DELIMITER":[r"\bI IZ\b", r"\bMKAY\b"],
+        "CONCAT OPERATOR" :[r"\bSMOOSH\b"],
+        "TYPECAST OPERATOR": [r"\bMAEK\b"],
+        "RECAST OPERATOR": [r"\b IS NOW A\b"],
+        "RETURN KEYWORD": [r"\bFOUND\b",r"\bGTFO\b"],
+        "OUTPUT KEYWORD": [r"\bVISIBLE\b"],
+        "INPUT KEYWORD": [r"\bGIMMEH\b"],
+        "PARAMETER SEPARATOR": [r"\bAN\b"],
+        "VARIABLE DECLARATION": [r"\bI HAS A\b"],
+        "VARIABLE ASSIGNMENT (following I HAS A)": [r"\bITZ\b"],
+        "TYPECAST A": [r"\ A\ "],
+        "NUMBAR LITERAL": [r"-?[0-9]+\.[0-9]+"],
+        "NUMBR LITERAL": [r"-?[0-9]+"],
+        "YARN LITERAL": ["\"(.*)\""],
+        "VAR IDENTIFIER": [r"[a-zA-Z][a-zA-Z0-9_]*"],
+        "TROOF LITERAL": [r"WIN|FAIL"],
+        "TYPE LITERAL": [r"NUMBR|NUMBAR|YARN|TROOF"],
+
+        # Ignore space and tabs
+        "IGNORE_S_T": [r"[ \t\n]"],
+
+        # Catch no matches
+        "NO_MATCH": [r".+"]
     }
+
+    matches_tuple = []
 
     # Exhausts all patterns in library
     for pattern in regex_library:
+        for regex in regex_library[pattern]:
+            # Find all matches of specific pattern
+            matches = re.finditer(regex, line)
+            # ignore the line if it match to the comment
+            for match in matches:
+                matches_tuple.append((match.start(), match.end(), match.group(), pattern))
 
-        # Find all matches of specific pattern
-        matches = re.findall(regex_library[pattern], line)
+    matches_tuple.sort(key=lambda m: m[0])
 
-        # Then append it to the variable to be returned
-        for match in matches:
-            lexemes.append((match, pattern))
+    # Filters duplicate tokens and intersecting tokens
+    seen_tokens = set()
+    for start, end, word, pattern in matches_tuple:
+        overlapping = False
+        new_tok = (start, end)
 
-        # Remove the specific pattern from line to avoid double-matching
-        line = re.sub(regex_library[pattern], '', line)
+        if not seen_tokens:
+            lexemes.append((word, pattern))
+            seen_tokens.add((start, end))
+
+        for seen in seen_tokens:
+            if overlaps(new_tok, seen):
+                overlapping = True
+
+        if not overlapping:
+            seen_tokens.add((start, end))
+            lexemes.append((word, pattern))
 
     return lexemes
+
+def overlaps(x, y):
+    """Return True if intervals x and y overlap."""
+    return not (x[1] <= y[0] or y[1] <= x[0])
 
 def display_table(table):
     
     # Formatting variables
     token_width = 16
-    pattern_width = 24
+    pattern_width = 48
 
     print(f"{'Token':>{token_width}}  {'Pattern':>{pattern_width}}")
     print("-" * (token_width + pattern_width + 2))
@@ -121,7 +216,7 @@ def clean(token):
 
 
 def main():
-    lexeme_table = lex("test/simple_test.lol")
+    lexeme_table = lex("test/milestone1_test.lol")
     
     display_table(lexeme_table)
 
