@@ -26,7 +26,9 @@ def read_file(directory) -> str:
 
     return lines
 
-def lex(directory):
+# changed this to string param
+# because of the implementation in the gui (executing line by line)
+def lex(code_string):
     """
     Top-level function for lexical analysis.
     Calls `lexify` and `read_file` to perform lexing line-by-line
@@ -39,7 +41,7 @@ def lex(directory):
     """
     lexeme_table = []
 
-    lines = read_file(directory)
+    lines = code_string.split('\n')
 
     skip_line = False #flag sana to ignore lines pero di ko pa napagana
 
@@ -216,7 +218,10 @@ def clean(token):
 
 
 def main():
-    lexeme_table = lex("test/milestone1_test.lol")
+    # edited so this can still run properly
+    with open("test/milestone1_test.lol", 'r') as f:
+        code = f.read()
+    lexeme_table = lex(code)
     
     display_table(lexeme_table)
 
