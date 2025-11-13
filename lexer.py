@@ -26,7 +26,9 @@ def read_file(directory) -> str:
 
     return lines
 
-def lex(directory):
+# changed this to string param
+# because of the implementation in the gui (executing line by line)
+def lex(code_string):
     """
     Top-level function for lexical analysis.
     Calls `lexify` and `read_file` to perform lexing line-by-line
@@ -39,7 +41,7 @@ def lex(directory):
     """
     lexeme_table = []
 
-    lines = read_file(directory)
+    lines = code_string.split('\n')
 
     skip_line = False #flag sana to ignore lines pero di ko pa napagana
 
@@ -137,7 +139,7 @@ def lexify(line):
         "TYPECAST A": [r"\ A\ "],
         "NUMBAR LITERAL": [r"-?[0-9]+\.[0-9]+"],
         "NUMBR LITERAL": [r"-?[0-9]+"],
-        "YARN LITERAL": ["\"(.*)\""],
+        "YARN LITERAL": [r"\"(.*?)\""],
         "VAR IDENTIFIER": [r"[a-zA-Z][a-zA-Z0-9_]*"],
         "TROOF LITERAL": [r"WIN|FAIL"],
         "TYPE LITERAL": [r"NUMBR|NUMBAR|YARN|TROOF"],
@@ -179,8 +181,22 @@ def lexify(line):
         if not overlapping:
             seen_tokens.add((start, end))
             lexemes.append((word, pattern))
+    # to separate "" from yarns
+    cleaned_lexemes = []
+    for word, classification in lexemes:
+        if classification == "YARN LITERAL":
+            # get first "
+            cleaned_lexemes.append((word[0], "STRING DELIMITER"))
+            # get word
+            cleaned_lexemes.append((word[1:len(word)-1], classification))
+            # get ending "
+            cleaned_lexemes.append((word[-1], "STRING DELIMITER"))
+        else:
+            cleaned_lexemes.append((word,classification))
 
-    return lexemes
+        
+
+    return cleaned_lexemes
 
 def overlaps(x, y):
     """Return True if intervals x and y overlap."""
@@ -216,7 +232,10 @@ def clean(token):
 
 
 def main():
-    lexeme_table = lex("test/milestone1_test.lol")
+    # edited so this can still run properly
+    with open("test/milestone1_test.lol", 'r') as f:
+        code = f.read()
+    lexeme_table = lex(code)
     
     display_table(lexeme_table)
 
