@@ -139,7 +139,7 @@ def lexify(line):
         "TYPECAST A": [r"\ A\ "],
         "NUMBAR LITERAL": [r"-?[0-9]+\.[0-9]+"],
         "NUMBR LITERAL": [r"-?[0-9]+"],
-        "YARN LITERAL": ["\"(.*)\""],
+        "YARN LITERAL": [r"\"(.*?)\""],
         "VAR IDENTIFIER": [r"[a-zA-Z][a-zA-Z0-9_]*"],
         "TROOF LITERAL": [r"WIN|FAIL"],
         "TYPE LITERAL": [r"NUMBR|NUMBAR|YARN|TROOF"],
