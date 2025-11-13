@@ -181,8 +181,22 @@ def lexify(line):
         if not overlapping:
             seen_tokens.add((start, end))
             lexemes.append((word, pattern))
+    # to separate "" from yarns
+    cleaned_lexemes = []
+    for word, classification in lexemes:
+        if classification == "YARN LITERAL":
+            # get first "
+            cleaned_lexemes.append((word[0], "STRING DELIMITER"))
+            # get word
+            cleaned_lexemes.append((word[1:len(word)-1], classification))
+            # get ending "
+            cleaned_lexemes.append((word[-1], "STRING DELIMITER"))
+        else:
+            cleaned_lexemes.append((word,classification))
 
-    return lexemes
+        
+
+    return cleaned_lexemes
 
 def overlaps(x, y):
     """Return True if intervals x and y overlap."""
