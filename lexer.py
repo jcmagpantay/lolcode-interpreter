@@ -3,29 +3,6 @@
 import re
 
 
-# Reads the file to be lexically analyzed
-def read_file(directory) -> str:
-    """
-    Read file directory to be analyzed.
-
-    Args:
-        directory (str): Path of the file.
-
-    Returns:
-        list: File contents as list of string per line.
-    """ 
-
-    # Error safety check
-
-    with open(directory) as f:
-        file_content = f.read()
-        lines = file_content.split('\n')
-
-        for line in lines:
-            lexeme_line = lexify(line)
-
-    return lines
-
 # changed this to string param
 # because of the implementation in the gui (executing line by line)
 def lex(code_string):
@@ -46,7 +23,7 @@ def lex(code_string):
     skip_line = False #flag sana to ignore lines pero di ko pa napagana
 
 
-    for line in lines:
+    for idx,line in enumerate(lines):
 
         #if nasa loob ng  block comment, look for TLDR
         if skip_line:
@@ -88,13 +65,13 @@ def lex(code_string):
         # Ignore everything after
         if "BTW" in line:
             line = line.split("BTW")[0]  # keep only before BTW
-        lexeme_line = lexify(line)
+        lexeme_line = lexify(line, idx + 1)
         lexeme_table.extend(lexeme_line)
 
 
     return lexeme_table       
 
-def lexify(line):
+def lexify(line, line_no):
     """
     Tokenize the string line into lexemes based on RegEx patterns
 
@@ -186,13 +163,13 @@ def lexify(line):
     for word, classification in lexemes:
         if classification == "YARN LITERAL":
             # get first "
-            cleaned_lexemes.append((word[0], "STRING DELIMITER"))
+            cleaned_lexemes.append((word[0], "STRING DELIMITER", line_no))
             # get word
-            cleaned_lexemes.append((word[1:len(word)-1], classification))
+            cleaned_lexemes.append((word[1:len(word)-1], classification, line_no))
             # get ending "
-            cleaned_lexemes.append((word[-1], "STRING DELIMITER"))
+            cleaned_lexemes.append((word[-1], "STRING DELIMITER", line_no))
         else:
-            cleaned_lexemes.append((word,classification))
+            cleaned_lexemes.append((word,classification,line_no))
 
         
 
@@ -211,24 +188,12 @@ def display_table(table):
     print(f"{'Token':>{token_width}}  {'Pattern':>{pattern_width}}")
     print("-" * (token_width + pattern_width + 2))
 
-    for (token, pattern) in table:
+    for (token, pattern, line_no) in table:
         if pattern == "IGNORE_S_T":
             continue
 
-        print(f"{token:>{token_width}}  ", end = "")
+        print(f"[{line_no}]{token:>{token_width}}  ", end = "")
         print(f"{pattern:>{pattern_width}}")
-
-def clean(token):
-    """
-    Clean the token by removing any noisy input.
-
-    Args:
-        token (str): The token to be cleaned.
-
-    Returns:
-        str: The cleaned token.
-    """
-    pass
 
 
 def main():

@@ -171,7 +171,7 @@ class LOLCodeInterpreterGUI:
             self.lexeme_tree.delete(item)
         
         # Fill the tree(table) with the values from the list returned from lex
-        for lexeme, classification in lexemes:
+        for lexeme, classification, line_no in lexemes:
             # ignore the IGNORE patterns
             if classification == "IGNORE_S_T":
                 continue
